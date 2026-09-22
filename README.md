@@ -1,201 +1,412 @@
-# ♻ SMART WASTE CLASSIFICATION SYSTEM
+# ♻️ Smart Waste Classification System
 
-**AI-Powered Waste Detection & Eco-Disposal Guidance using YOLOv11n**  
-*Subject: IPA (Image Processing and Applications)*
+### AI-Powered Waste Detection, Classification & Eco-Disposal Guidance using YOLOv11n
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![YOLOv11](https://img.shields.io/badge/YOLOv11-Ultralytics-purple.svg)](https://github.com/ultralytics/ultralytics)
+[![Flask](https://img.shields.io/badge/Backend-Flask-black.svg)](https://flask.palletsprojects.com/)
+[![OpenCV](https://img.shields.io/badge/Computer%20Vision-OpenCV-green.svg)](https://opencv.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> **Smart Waste Classification System** is an AI-powered computer vision project developed for **IPA (Image Processing and Applications)**. It uses a custom-trained **YOLOv11n** object detection model to identify different types of waste from images or camera input and provides classification results together with disposal and recycling guidance.
 
 ---
 
-## 📌 Project Overview & Objective
+## 📌 Project Overview
 
-The **Smart Waste Classification System** is an engineering AI application that performs real-time visual waste detection, localization, and classification into six primary categories using a custom-trained **YOLOv11n (Nano)** deep learning model. 
+Improper waste segregation and disposal can create environmental, health, and safety problems. The goal of this project is to demonstrate how **Artificial Intelligence and Computer Vision** can assist with automated waste identification.
 
-In addition to detecting objects and rendering bounding boxes with class confidence percentages, the system provides domain-specific **Eco-Disposal and Recycling Guidelines** to prevent improper handling of hazardous, chemical, bio-medical, and electronic waste.
+The system uses a custom-trained **YOLOv11n (Nano)** model to detect and classify waste objects in an image.
+
+The application provides:
+
+* 🔍 Automatic waste detection
+* 🎯 Bounding-box localization
+* 📊 Confidence score for each detection
+* ♻️ Waste classification
+* 📷 Image upload
+* 📹 Browser camera capture
+* 🧠 YOLOv11n AI inference
+* 📋 Object count and detection details
+* 🌱 Disposal and recycling guidance
+* 🌐 Web-based user interface
+* 🖥️ Original Tkinter desktop application
+
+---
+
+## 🎯 Objectives
+
+The main objectives of this project are:
+
+1. To develop an AI-based waste detection system.
+2. To train a YOLOv11n model for waste object detection.
+3. To combine multiple waste datasets into a unified dataset.
+4. To classify waste into predefined categories.
+5. To display detected objects using bounding boxes.
+6. To provide confidence scores for predictions.
+7. To provide useful disposal and recycling recommendations.
+8. To convert the original desktop application into a web-based application.
+9. To create a system that can be accessed through a browser.
+
+---
+
+## 🏷️ Waste Categories
+
+The trained model supports **six waste categories**:
+
+| Class ID | Waste Category    | Description                          |
+| -------: | ----------------- | ------------------------------------ |
+|        0 | `E_waste`         | Electronic and electrical waste      |
+|        1 | `Medical_waste`   | Biomedical and medical-related waste |
+|        2 | `Hazardous_waste` | Waste requiring controlled handling  |
+|        3 | `Chemical_waste`  | Chemical and spill-related waste     |
+|        4 | `Plastic_waste`   | Plastic-based waste materials        |
+|        5 | `Paper_waste`     | Paper and paper-based waste          |
+
+> **Note:** The application uses the class names stored in the trained YOLO model as the primary source of truth.
+
+---
+
+## 🧠 Machine Learning Model
+
+This project uses:
+
+**YOLOv11n (YOLOv11 Nano)**
+
+YOLO is a real-time object detection architecture capable of locating and classifying objects within images.
+
+### Model
+
+```text
+Base Model:
+YOLOv11n
+
+Training Approach:
+Transfer Learning
+
+Model File:
+best.pt
+
+Task:
+Object Detection
+
+Input:
+Image / Camera Frame
+
+Output:
+Bounding Boxes + Class + Confidence
+```
+
+The trained model is stored as:
+
+```text
+best.pt
+```
+
+The web application loads this model and performs inference whenever an image is submitted.
+
+---
+
+## 🔄 System Workflow
+
+```text
+                  ┌─────────────────────┐
+                  │     User Input      │
+                  │                     │
+                  │  Image / Camera     │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │    Flask Backend    │
+                  │                     │
+                  │ Image Processing    │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │    YOLOv11n Model   │
+                  │                     │
+                  │     best.pt         │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │     Detection       │
+                  │                     │
+                  │ Class + Confidence  │
+                  │ Bounding Boxes      │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │   Web Dashboard     │
+                  │                     │
+                  │ Results + Guidance │
+                  └─────────────────────┘
+```
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Python 3.10+, Flask, Werkzeug
-- **Machine Learning**: Ultralytics YOLOv11n (`best.pt`), PyTorch
-- **Computer Vision & Image Processing**: OpenCV (OpenCV Headless), Pillow, NumPy
-- **Frontend**: HTML5, CSS3 (Modern AI Dashboard layout), Vanilla JavaScript (Webcam API via `navigator.mediaDevices.getUserMedia`)
-- **Deployment**: Local WSGI, Vercel Serverless configuration (`vercel.json`, `api/index.py`)
+### Machine Learning
 
----
+* Python
+* Ultralytics YOLOv11n
+* PyTorch
+* Transfer Learning
 
-## 🏷️ Supported Waste Categories (6 Classes)
+### Computer Vision
 
-The trained model (`best.pt`) maps to the following six verified classes:
+* OpenCV
+* Pillow
+* NumPy
 
-| Class ID | Class Name | Category Color | Recommended Handling |
-| :---: | :--- | :---: | :--- |
-| `0` | **E_waste** | `#0288D1` (Blue) | Authorized E-Waste collection & metal recovery centers |
-| `1` | **Medical_waste** | `#E53935` (Red) | Certified biohazard bins; clinical incineration |
-| `2` | **Hazardous_waste** | `#FB8C00` (Orange) | Sealed containment; hazardous chemical depots |
-| `3` | **Chemical_waste** | `#8E24AA` (Purple) | Spill neutralizers, PPE, regulated treatment |
-| `4` | **Plastic_waste** | `#43A047` (Green) | Cleaned, sorted by polymer (PET/HDPE), pelletized |
-| `5` | **Paper_waste** | `#D97706` (Amber) | Keep dry, flatten corrugated boxes, paper pulping |
+### Backend
+
+* Flask
+* Werkzeug
+* Python REST API
+
+### Frontend
+
+* HTML5
+* CSS3
+* JavaScript
+* Browser MediaDevices API
+
+### Deployment
+
+* GitHub
+* Vercel configuration
+* Python WSGI entry point
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-Smart Waste Classification Web Version/
-│
-├── app.py                     # Flask backend API & YOLO inference engine
-├── best.pt                    # Trained 6-class YOLOv11n weights (5.4 MB)
-├── requirements.txt           # Minimal web inference dependencies
-├── vercel.json                # Vercel serverless deployment config
-├── .gitignore                 # Excludes datasets/runs/cache, keeps best.pt
-├── README.md                  # Comprehensive documentation & viva guide
+smart-waste-classification/
 │
 ├── api/
-│   └── index.py               # Vercel WSGI entry point
-│
-├── templates/
-│   └── index.html             # Responsive modern AI dashboard
+│   └── index.py
+│       # Vercel/serverless WSGI entry point
 │
 ├── static/
-│   ├── style.css              # Custom styling, dark navy header, status cards
-│   └── script.js              # Camera stream, drag-drop, API communication
+│   ├── style.css
+│   │   # Web application styling
+│   │
+│   └── script.js
+│       # Frontend logic, camera and API communication
 │
-├── app_gui.py                 # Preserved original Tkinter desktop GUI
-├── train.py                   # Preserved training script
-├── merge_datasets.py          # Preserved dataset merger script
-├── Dataset/                   # Dataset repository (excluded from git/deployment)
-└── runs/                      # Training outputs & logs (excluded from git/deployment)
+├── templates/
+│   └── index.html
+│       # Main web dashboard
+│
+├── app.py
+│   # Flask backend and YOLO inference API
+│
+├── app_gui.py
+│   # Original Tkinter desktop application
+│
+├── best.pt
+│   # Trained YOLOv11n model weights
+│
+├── train.py
+│   # YOLO model training and validation script
+│
+├── merge_datasets.py
+│   # Dataset merging and class mapping script
+│
+├── requirements.txt
+│   # Python dependencies
+│
+├── vercel.json
+│   # Deployment configuration
+│
+├── .gitignore
+│   # Git ignored files and directories
+│
+└── README.md
+    # Project documentation
 ```
 
 ---
 
-## 🚀 How to Install & Run Locally (Windows)
+# 🚀 Running the Web Application Locally
 
-### 1. Open Terminal & Navigate to Project
-```powershell
-cd "e:\STUDY\NIRMA EI\SEM-5\IPA\Smart Waste Classification Web Version"
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/paramvekariya89/smart-waste-classification.git
 ```
 
-### 2. (Optional) Create and Activate Virtual Environment
-```powershell
+Move into the project directory:
+
+```bash
+cd smart-waste-classification
+```
+
+---
+
+## 2. Create a Virtual Environment
+
+Windows:
+
+```bash
 python -m venv venv
+```
+
+Activate it:
+
+```bash
 venv\Scripts\activate
 ```
 
-### 3. Install Dependencies
-```powershell
+---
+
+## 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run the Flask Web Application
-```powershell
+---
+
+## 4. Start the Flask Application
+
+```bash
 python app.py
 ```
 
-### 5. Access the Web Dashboard
-Open your web browser and navigate to:
-```
+The application will normally be available at:
+
+```text
 http://127.0.0.1:5000
 ```
 
----
-
-## 🧪 How to Test the Web Application
-
-1. **Upload an Image**:
-   - Click **Upload Image** or drag and drop any `.jpg`, `.png`, `.webp`, or `.bmp` file into the display area.
-   - Click **Analyze Image** to run YOLOv11n inference.
-2. **Camera Capture**:
-   - Click **Use Camera** to activate your webcam.
-   - Click **Capture Frame** to capture a snapshot and immediately detect waste.
-3. **Quick Test Sample**:
-   - Click **Test Sample** to load a random image directly from the test dataset and classify it.
-4. **Clear Dashboard**:
-   - Click **Clear** to reset the display screen, result badges, progress bar, and guidelines.
+Open the address in your browser.
 
 ---
 
-## 📡 Prediction API Specification
+# 📷 Using the Web Application
 
-### `POST /predict`
-Submits an image for YOLOv11n object detection and classification.
+## Method 1 — Upload an Image
 
-#### Request Formats:
-- **Multipart Form Data**:
-  - Key: `image` (File upload)
-- **JSON Payload** (Base64 data URL):
-  ```json
-  {
-    "image_base64": "data:image/jpeg;base64,..."
-  }
-  ```
+1. Open the web application.
+2. Select **Upload Image**.
+3. Choose an image containing waste.
+4. Click **Analyze Image**.
+5. The YOLOv11n model processes the image.
+6. Detection results are displayed on the dashboard.
 
-#### Response Example:
+The result includes:
+
+* Detected class
+* Confidence percentage
+* Bounding box
+* Number of detected objects
+* Inference time
+* Disposal guidance
+* Annotated image
+
+---
+
+## Method 2 — Camera Detection
+
+The web version uses the browser's camera interface.
+
+1. Click **Use Camera**.
+2. Allow camera access when requested.
+3. Position the waste object in front of the camera.
+4. Click **Capture Frame**.
+5. The captured frame is sent to the backend.
+6. YOLOv11n performs detection.
+7. Results are displayed on the dashboard.
+
+The browser camera approach allows the web application to use the user's camera without requiring the Python application to directly access the computer's webcam.
+
+---
+
+## Method 3 — Test Sample
+
+When running the complete project locally with the test dataset available, the test functionality can load a sample image and perform inference.
+
+For a deployed web application, the dataset itself is not required for normal user image prediction.
+
+---
+
+# 🔍 Detection Output
+
+For every detected object, the application can provide information such as:
+
+```text
+Class:
+Plastic Waste
+
+Confidence:
+94.7%
+
+Object Count:
+2
+
+Inference Time:
+32.4 ms
+```
+
+The image is also annotated with bounding boxes around detected objects.
+
+Example response structure:
+
 ```json
 {
-  "success": true,
-  "message": "Successfully detected 2 object(s).",
-  "primary_class": "Plastic_waste",
-  "primary_class_display": "Plastic Waste",
-  "primary_confidence": 94.7,
-  "primary_color_hex": "#43A047",
-  "object_count": 2,
-  "inference_time_ms": 32.4,
-  "detections": [
-    {
-      "class_id": 4,
-      "class_name": "Plastic_waste",
-      "class_display": "Plastic Waste",
-      "confidence": 94.7,
-      "color_hex": "#43A047",
-      "bbox": [120, 85, 450, 510]
-    }
-  ],
-  "guidelines": {
-    "title": "Plastic Waste (Polymers)",
-    "action": "Rinse clean of food and chemical residues...",
-    "caution": "Never burn plastics, as open combustion generates toxic dioxins...",
-    "benefit": "Enables sorting (PET, HDPE, PP) and mechanical pelletizing..."
-  },
-  "disclaimer": "AI predictions are intended for project demonstration...",
-  "annotated_image": "data:image/jpeg;base64,..."
+    "success": true,
+    "primary_class": "Plastic_waste",
+    "primary_confidence": 94.7,
+    "object_count": 2,
+    "inference_time_ms": 32.4,
+    "detections": [
+        {
+            "class_id": 4,
+            "class_name": "Plastic_waste",
+            "confidence": 94.7,
+            "bbox": [120, 85, 450, 510]
+        }
+    ]
 }
 ```
 
 ---
 
-## ☁️ Vercel Deployment Guide & Architecture Notes
+# 📡 API
 
-### Vercel Deployment Steps:
-1. Ensure the repository is pushed to GitHub (with `Dataset/` and `runs/` excluded via `.gitignore`).
-2. Log into [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Import your GitHub repository.
-4. Vercel automatically detects `vercel.json` and configures the Python serverless runtime.
-5. Click **Deploy**.
+The web application provides a prediction endpoint:
 
-### ⚠️ Important Serverless / Vercel Limitations:
-- **Model Size vs. Library Size**: While `best.pt` is only **5.4 MB**, the required deep learning dependencies (`torch` + `ultralytics`) have an uncompressed size exceeding **500 MB**. Vercel's standard Serverless Function bundle size limit is **250 MB**.
-- **Recommended Free Production Alternatives**:
-  If Vercel build fails due to the 250 MB bundle limit, the standard recommended platforms for full PyTorch/Ultralytics hosting are:
-  - **Hugging Face Spaces (Free / Gradio or Docker Flask)**: Specifically designed for ML models with PyTorch.
-  - **Render.com / Railway (Docker Web Service)**: Supports persistent containers without serverless bundle restrictions.
-  - **Google Cloud Run**: Serverless container execution with support for custom Docker images up to several gigabytes.
+```text
+POST /predict
+```
+
+## Request
+
+The API accepts an image through multipart form data:
+
+```text
+image=<image file>
+```
+
+It can also process a Base64 image payload when supported by the frontend.
 
 ---
 
-## 🎓 IPA Viva / Project Demonstration Workflow
+## Response
 
-During your viva/demonstration, explain the core dataflow:
+The API returns information including:
+
 ```text
-IMAGE INPUT (Upload / Webcam / Test Sample)
-                   ↓
-PRE-PROCESSING (In-Memory OpenCV BGR Decode)
-                   ↓
-YOLOv11n INFERENCE (best.pt, Conf Threshold = 0.25)
-                   ↓
-BOUNDING BOX & CONFIDENCE COMPUTATION
-                   ↓
-CLASS-SPECIFIC COLOR ANNOTATION
-                   ↓
-ECO-DISPOSAL & RECYCLING REASONING
+success
+message
+primary_class
+primary_confidence
+object_cou_
 ```
