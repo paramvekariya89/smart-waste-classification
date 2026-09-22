@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Classification System — YOLOv11n</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-group">
+                <div class="brand-icon">♻</div>
+                <div>
+                    <h1 class="brand-title">SMART WASTE CLASSIFICATION SYSTEM</h1>
+                    <p class="brand-subtitle">AI-Powered Waste Detection using YOLOv11n &bull; IPA Project</p>
+                </div>
+            </div>
+            <div class="header-badges">
+                <div class="status-badge">
+                    <span class="badge-label">Model:</span>
+                    <span class="badge-value">YOLOv11n</span>
+                </div>
+                <div class="status-badge {% if model_ready %}ready{% else %}error{% endif %}">
+                    <span class="pulse-dot"></span>
+                    <span class="badge-label">Status:</span>
+                    <span class="badge-value" id="system-status">{% if model_ready %}Ready{% else %}Model Error{% endif %}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="main-container">
+        <div class="dashboard-grid">
+            
+            <!-- LEFT PANEL: Image Analysis & Input -->
+            <section class="panel-card input-panel">
+                <div class="panel-header">
+                    <div class="panel-title-wrapper">
+                        <span class="panel-icon">📷</span>
+                        <h2 class="panel-title">Image Analysis Panel</h2>
+                    </div>
+                    <span class="view-mode-tag" id="view-mode-tag">Mode: Idle</span>
+                </div>
+
+                <!-- Display / Screen Container -->
+                <div class="display-screen" id="display-screen">
+                    
+                    <!-- Default Placeholder & Drop Zone -->
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="upload-cloud-icon">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <h3 class="drop-title">Upload or Capture Waste Image</h3>
+                            <p class="drop-subtitle">Drag and drop an image here, or use the controls below</p>
+                            <span class="file-hint">Supported formats: JPG, PNG, WEBP, BMP (up to 16 MB)</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Camera Feed Container -->
+                    <div class="camera-container hidden" id="camera-container">
+                        <video id="webcam-video" autoplay playsinline muted></video>
+                        <div class="camera-overlay-controls">
+                            <button type="button" class="btn btn-capture" id="btn-camera-capture">
+                                <span>📸</span> Capture Frame
+                            </button>
+                            <button type="button" class="btn btn-secondary-sm" id="btn-camera-stop">
+                                Stop Camera
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Display (Preview / Annotated YOLO Result) -->
+                    <div class="image-preview-container hidden" id="preview-container">
+                        <img id="main-display-img" src="" alt="Waste Image Display">
+                        <div class="image-tag" id="image-tag">Raw Image</div>
+                    </div>
+
+                    <!-- Loading Spinner Overlay -->
+                    <div class="loading-overlay hidden" id="loading-overlay">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Analyzing image with YOLOv11n...</p>
+                        <span class="loading-subtext">Executing object detection & bounding box computation</span>
+                    </div>
+                </div>
+
+                <!-- Control Actions Toolbar -->
+                <div class="controls-toolbar">
+                    <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp,.bmp" class="hidden">
+                    
+                    <button type="button" class="btn btn-primary" id="btn-trigger-upload">
+                        <span class="btn-icon">📁</span> Upload Image
+                    </button>
+                    
+                    <button type="button" class="btn btn-camera" id="btn-trigger-camera">
+                        <span class="btn-icon">📷</span> Use Camera
+                    </button>
+
+                    <button type="button" class="btn btn-sample-btn" id="btn-trigger-sample">
+                        <span class="btn-icon">🧪</span> Test Sample
+                    </button>
+
+                    <button type="button" class="btn btn-analyze" id="btn-run-analysis" disabled>
+                        <span class="btn-icon">⚡</span> Analyze Image
+                    </button>
+
+                    <button type="button" class="btn btn-clear" id="btn-reset-all">
+                        <span class="btn-icon">🔄</span> Clear
+                    </button>
+                </div>
+
+                <!-- Quick Samples Row (Convenient for viva/demo testing) -->
+                <div class="sample-tools">
+                    <span class="sample-label">Quick Test Samples:</span>
+                    <button type="button" class="btn-sample" data-sample="battery">E-Waste</button>
+                    <button type="button" class="btn-sample" data-sample="medical">Medical Waste</button>
+                    <button type="button" class="btn-sample" data-sample="chemical">Chemical Waste</button>
+                    <button type="button" class="btn-sample" data-sample="hazardous">Hazardous Waste</button>
+                    <button type="button" class="btn-sample" data-sample="plastic">Plastic Waste</button>
+                    <button type="button" class="btn-sample" data-sample="paper">Paper Waste</button>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: Classification Results & Guidance -->
+            <section class="panel-card results-panel">
+                <div class="panel-header">
+                    <div class="panel-title-wrapper">
+                        <span class="panel-icon">📊</span>
+                        <h2 class="panel-title">Classification Result</h2>
+                    </div>
+                    <span class="yolo-tag">Ultralytics YOLO</span>
+                </div>
+
+                <!-- Primary Result Card -->
+                <div class="result-card primary-result-card" id="primary-card">
+                    <div class="badge-label-small">PRIMARY DETECTION</div>
+                    <div class="class-badge" id="primary-class-badge" style="background-color: #64748B;">
+                        AWAITING IMAGE
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-name">Confidence</span>
+                            <span class="metric-val" id="primary-conf-val">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-name">Objects Detected</span>
+                            <span class="metric-val" id="object-count-val">0</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-name">Inference Time</span>
+                            <span class="metric-val" id="inference-time-val">-- ms</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-section">
+                        <div class="progress-label-row">
+                            <span>Confidence Level</span>
+                            <span id="progress-percent-label">0%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="confidence-progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individual Detections Breakdown List -->
+                <div class="detections-card">
+                    <div class="section-title-row">
+                        <h3 class="section-title">Detected Objects List</h3>
+                        <span class="counter-pill" id="detections-counter">0 Items</span>
+                    </div>
+                    <div class="detections-list" id="detections-list">
+                        <div class="empty-list-placeholder">No objects detected yet. Run analysis to view individual detections.</div>
+                    </div>
+                </div>
+
+                <!-- Eco-Disposal Guidelines Card -->
+                <div class="guidelines-card">
+                    <div class="guidelines-header">
+                        <span class="guidelines-icon">🌱</span>
+                        <h3 class="section-title" id="guidelines-title">Eco-Disposal & Handling Guidelines</h3>
+                    </div>
+                    <div class="guidelines-body" id="guidelines-content">
+                        <p class="guideline-item">
+                            <strong>Recommended Action:</strong>
+                            <span id="guideline-action">Load an image to receive domain-specific recycling instructions.</span>
+                        </p>
+                        <p class="guideline-item warning-text">
+                            <strong>Safety Caution:</strong>
+                            <span id="guideline-caution">Always wear proper protective gear when handling hazardous or unknown waste.</span>
+                        </p>
+                        <p class="guideline-item benefit-text">
+                            <strong>Environmental Impact:</strong>
+                            <span id="guideline-benefit">Responsible sorting prevents toxic landfill leaching and conserves raw materials.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Mandatory Project Disclaimer -->
+                <div class="disclaimer-note">
+                    <span class="disclaimer-icon">ℹ</span>
+                    <span>AI predictions are intended for project demonstration and should not replace official waste-handling procedures.</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- BOTTOM INFORMATION SECTIONS -->
+        <div class="info-grid">
+            <!-- Supported Categories Card -->
+            <div class="panel-card info-card">
+                <div class="info-card-header">
+                    <span class="info-icon">🏷️</span>
+                    <h3>Supported Waste Categories</h3>
+                </div>
+                <p class="info-desc">Trained 6-class YOLOv11n model object detection mapping:</p>
+                <div class="category-tags-container">
+                    <span class="category-chip" style="--chip-color: #0288D1;"><span class="chip-dot"></span>E-Waste</span>
+                    <span class="category-chip" style="--chip-color: #E53935;"><span class="chip-dot"></span>Medical Waste</span>
+                    <span class="category-chip" style="--chip-color: #FB8C00;"><span class="chip-dot"></span>Hazardous Waste</span>
+                    <span class="category-chip" style="--chip-color: #8E24AA;"><span class="chip-dot"></span>Chemical Waste</span>
+                    <span class="category-chip" style="--chip-color: #43A047;"><span class="chip-dot"></span>Plastic Waste</span>
+                    <span class="category-chip" style="--chip-color: #D97706;"><span class="chip-dot"></span>Paper Waste</span>
+                </div>
+            </div>
+
+            <!-- About The Model Card -->
+            <div class="panel-card info-card">
+                <div class="info-card-header">
+                    <span class="info-icon">🧠</span>
+                    <h3>About the Model</h3>
+                </div>
+                <div class="specs-grid">
+                    <div class="spec-row">
+                        <span class="spec-label">Model Architecture:</span>
+                        <span class="spec-val">YOLOv11n (Nano)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Application Domain:</span>
+                        <span class="spec-val">Smart Waste Classification (IPA)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Deep Learning Framework:</span>
+                        <span class="spec-val">Ultralytics YOLO / PyTorch</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Task Type:</span>
+                        <span class="spec-val">Real-Time Object Detection & Bounding Box</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Trained Waste Categories:</span>
+                        <span class="spec-val">6 Classes (Verified via <code>best.pt</code>)</span>
+                    </div>
+                    <div class="spec-row">
+                        <span class="spec-label">Inference Confidence Threshold:</span>
+                        <span class="spec-val">25% (0.25)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>Smart Waste Classification System &bull; IPA (Image Processing and Applications) &bull; YOLOv11n</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
