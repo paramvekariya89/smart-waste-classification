@@ -9,6 +9,7 @@ import io
 import time
 import base64
 import gc
+import random
 import logging
 from typing import Dict, Any, List, Tuple
 
@@ -406,46 +407,53 @@ def predict():
 
 @app.route("/api/sample", methods=["GET"])
 def get_sample():
-    """Picks a random test image from the test dataset (mirroring Tkinter 'Test Sample' feature)."""
-    import random
-    test_dirs = [
-        os.path.join(BASE_DIR, "Dataset", "Final_merged_dataset", "merged", "test", "images"),
-        os.path.join(BASE_DIR, "Dataset", "Final_merged_dataset", "test", "images"),
-    ]
-    
-    found_dir = None
-    for d in test_dirs:
-        if os.path.exists(d):
-            found_dir = d
-            break
-            
-    if not found_dir and os.path.exists(os.path.join(BASE_DIR, "Dataset")):
-        # Check subdirectories
-        for sub in os.listdir(os.path.join(BASE_DIR, "Dataset")):
-            candidate = os.path.join(BASE_DIR, "Dataset", sub, "test", "images")
-            if os.path.exists(candidate):
-                found_dir = candidate
-                break
+    """Return a random test image from static/samples."""
 
-    if not found_dir:
-        return jsonify({"success": False, "error": "No test dataset folder found on server."}), 404
+    try:
+        samples_dir = os.path.join(BASE_DIR, "static", "samples")
 
-    image_files = [f for f in os.listdir(found_dir) if f.lower().endswith(('.jpg', '.png', '.jpeg'))]
-    if not image_files:
-        return jsonify({"success": False, "error": "No images found in test folder."}), 404
+        if not os.path.isdir(samples_dir):
+            return jsonify({
+                "error": "No sample images found on server.",
+                "message": "Add test images to static/samples/"
+            }), 404
 
-    selected = random.choice(image_files)
-    file_path = os.path.join(found_dir, selected)
-    
-    with open(file_path, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode('utf-8')
+        allowed_extensions = {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        }
 
-    return jsonify({
-        "success": True,
-        "filename": selected,
-        "image_base64": f"data:image/jpeg;base64,{b64}"
-    })
+        sample_files = [
+            filename
+            for filename in os.listdir(samples_dir)
+            if os.path.splitext(filename)[1].lower() in allowed_extensions
+        ]
+
+        if not sample_files:
+            return jsonify({
+                "error": "No sample images found on server.",
+                "message": "Add JPG, JPEG, PNG, or WEBP images to static/samples/"
+            }), 404
+
+        selected_file = random.choice(sample_files)
+
+        return jsonify({
+            "success": True,
+            "filename": selected_file,
+            "url": url_for(
+                "static",
+                filename=f"samples/{selected_file}"
+            )
+        })
+
+    except Exception as e:
+        logger.exception("Error loading sample image")
+        return jsonify({
+            "error": "Failed to load sample image.",
+            "message": str(e)
+        }), 500
 
 
 # ------------------------------------------------------------------------------
