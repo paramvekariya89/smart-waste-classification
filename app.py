@@ -8,6 +8,7 @@ import os
 import io
 import time
 import base64
+import gc
 import logging
 from typing import Dict, Any, List, Tuple
 
@@ -114,12 +115,15 @@ def load_yolo_model():
 
     try:
         yolo_model = YOLO(MODEL_PATH)
+        # Render deployment: explicitly keep YOLO on CPU to avoid GPU/CUDA initialization.
+        yolo_model.to("cpu")
         if hasattr(yolo_model, "names") and isinstance(yolo_model.names, dict):
             model_classes = yolo_model.names
         else:
             model_classes = {i: name for i, name in enumerate(yolo_model.names)}
         logger.info("Model loaded successfully")
         logger.info("Model classes: %s", model_classes)
+        logger.info("Inference device: CPU | imgsz: 320 | max_det: 10")
         return True
     except Exception as e:
         logger.exception("Failed to load YOLO model: %s", e)
@@ -279,14 +283,57 @@ def predict():
         return jsonify({"success": False, "error": "Failed to decode image. File may be corrupted or unreadable."}), 400
 
     # Execute Ultralytics inference
+    # Render deployment: use CPU + smaller inference size to reduce RAM usage.
     try:
+        # Release temporary Python/OpenCV memory before inference.
+        gc.collect()
+
+        # Limit very large uploaded images before YOLO processing.
+        # This reduces memory usage while preserving the image aspect ratio.
+        max_dimension = 1024
+        image_h, image_w = bgr_image.shape[:2]
+        largest_dimension = max(image_h, image_w)
+
+        if largest_dimension > max_dimension:
+            resize_scale = max_dimension / float(largest_dimension)
+            new_width = max(1, int(image_w * resize_scale))
+            new_height = max(1, int(image_h * resize_scale))
+            bgr_image = cv2.resize(
+                bgr_image,
+                (new_width, new_height),
+                interpolation=cv2.INTER_AREA
+            )
+            logger.info(
+                "Resized input image from %sx%s to %sx%s for lower-memory inference.",
+                image_w,
+                image_h,
+                new_width,
+                new_height
+            )
+
         start_time = time.time()
-        # conf=0.25 matching existing application
-        results = yolo_model.predict(bgr_image, conf=CONFIDENCE_THRESHOLD, verbose=False)
+
+        results = yolo_model.predict(
+            bgr_image,
+            conf=CONFIDENCE_THRESHOLD,
+            device="cpu",
+            imgsz=320,
+            max_det=10,
+            verbose=False
+        )
+
         inference_time_ms = round((time.time() - start_time) * 1000.0, 1)
+        logger.info("YOLO inference completed in %.1f ms", inference_time_ms)
+
+        # Give Python/OpenCV a chance to release temporary inference memory.
+        gc.collect()
+
     except Exception as e:
         logger.exception("Inference execution failed: %s", e)
-        return jsonify({"success": False, "error": "An error occurred during YOLO model inference."}), 500
+        return jsonify({
+            "success": False,
+            "error": "An error occurred during YOLO model inference."
+        }), 500
 
     detections = []
     if len(results) > 0 and len(results[0].boxes) > 0:
@@ -405,6 +452,6 @@ def get_sample():
 # Entry Point
 # ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    logger.info("Starting Smart Waste Classification Web Application...")
-    logger.info("Access the application locally at: http://127.0.0.1:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    logger.info("Starting Smart Waste Classification Web Application on port %d...", port)
+    app.run(host="0.0.0.0", port=port, debug=False)
