@@ -377,36 +377,82 @@ Example response structure:
 }
 ```
 
----
+# 🚀 Cloud Deployment Guide (Vercel + Render)
 
-# 📡 API
-
-The web application provides a prediction endpoint:
-
-```text
-POST /predict
-```
-
-## Request
-
-The API accepts an image through multipart form data:
-
-```text
-image=<image file>
-```
-
-It can also process a Base64 image payload when supported by the frontend.
+The application uses an optimized, decoupled architecture:
+- **Backend (Flask + YOLOv11n + Gunicorn)**: Hosted on **Render** (no 500 MB limit, runs full PyTorch).
+- **Frontend (Static UI)**: Hosted on **Vercel** (global CDN, instant response, 100% free).
 
 ---
 
-## Response
+## 1. Deploy Backend to Render
 
-The API returns information including:
+1. Go to [Render.com](https://render.com) and log in with GitHub.
+2. Click **New +** &rarr; **Web Service**.
+3. Connect your repository: `paramvekariya89/smart-waste-classification`.
+4. Configure service settings:
+   - **Root Directory**: `backend`
+   - **Environment**: `Python 3`
+   - **Branch**: `main`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn -w 1 -b 0.0.0.0:$PORT app:app`
+   - **Plan**: Free
+5. Click **Deploy Web Service**.
+6. Copy your public service URL (e.g., `https://smart-waste-classification.onrender.com`).
 
-```text
-success
-message
-primary_class
-primary_confidence
-object_cou_
+---
+
+## 2. Deploy Frontend to Vercel
+
+1. Go to [Vercel.com](https://vercel.com) and log in with GitHub.
+2. Click **Add New...** &rarr; **Project**.
+3. Import `paramvekariya89/smart-waste-classification`.
+4. Under **Configure Project**:
+   - **Root Directory**: Click *Edit* and select `frontend` (or leave root as `./` since `vercel.json` routes to `frontend`).
+   - **Framework Preset**: *Other*
+5. Click **Deploy**.
+6. Open your new Vercel website URL!
+7. Click the **⚙️ API Config** button in the header and paste your Render URL.
+
+---
+
+# 📡 API Reference
+
+### `GET /health`
+Returns backend model status and class mapping.
+
+### `POST /predict`
+Submits an image for YOLOv11n object detection.
+- **Payload**: Multipart file (`image`) or JSON (`image_base64`).
+- **Response**:
+```json
+{
+  "success": true,
+  "primary_class": "Plastic_waste",
+  "primary_class_display": "Plastic Waste",
+  "primary_confidence": 94.7,
+  "primary_color_hex": "#43A047",
+  "object_count": 2,
+  "inference_time_ms": 32.4,
+  "detections": [
+    {
+      "class_id": 4,
+      "class_name": "Plastic_waste",
+      "class_display": "Plastic Waste",
+      "confidence": 94.7,
+      "color_hex": "#43A047",
+      "bbox": [120, 85, 450, 510]
+    }
+  ],
+  "guidelines": {
+    "title": "Plastic Waste (Polymers)",
+    "action": "Rinse clean of food and chemical residues...",
+    "caution": "Never burn plastics...",
+    "benefit": "Enables sorting and mechanical pelletizing..."
+  },
+  "annotated_image": "data:image/jpeg;base64,..."
+}
 ```
+
+### `GET /api/sample` & `GET /api/sample/<category>`
+Returns a curated test sample image (`E_waste`, `Medical_waste`, `Hazardous_waste`, `Chemical_waste`, `Plastic_waste`, `Paper_waste`) from the lightweight `sample_images/` directory for instant live demonstration without any external database.
