@@ -5,7 +5,7 @@
 
 // Default backend URL when deployed on Render
 // Replace this with your actual Render service URL once deployed:
-const DEFAULT_RENDER_BACKEND = "https://smart-waste-classification.onrender.com";
+const DEFAULT_RENDER_BACKEND = "https://smart-waste-classification-uer2.onrender.com";
 
 // Determine active backend URL (allows localStorage override for testing)
 function getBackendUrl() {
