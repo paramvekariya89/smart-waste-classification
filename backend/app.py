@@ -283,8 +283,11 @@ def predict():
     try:
         bgr_image = decode_image_from_bytes(image_bytes)
     except Exception as e:
-        logger.warning("Corrupted image received: %s", e)
-        return jsonify({"success": False, "error": "Failed to decode image. File may be corrupted or unreadable."}), 400
+        logger.exception("Inference execution failed: %s", e)
+    return jsonify({
+        "success": False,
+        "error": f"YOLO inference failed: {type(e).__name__}: {str(e)}"
+    }), 500
 
     # Execute Ultralytics YOLOv11n inference
     try:
