@@ -42,7 +42,7 @@ ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.bmp'}
 # Model Paths & Configuration
 # ------------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "best.onnx")
 SAMPLES_DIR = os.path.join(BASE_DIR, "sample_images")
 CONFIDENCE_THRESHOLD = 0.25
 
@@ -219,7 +219,7 @@ def home():
     """Root info endpoint."""
     return jsonify({
         "service": "Smart Waste Classification API",
-        "model": "YOLOv11n",
+        "model": "YOLOv11n ONNX",
         "status": "online",
         "endpoints": {
             "health": "/health",
@@ -235,7 +235,7 @@ def health():
     return jsonify({
         "status": "ready" if yolo_model is not None else "model_missing",
         "model": "YOLOv11n",
-        "weights": "best.pt",
+        "weights": "best.onnx",
         "confidence_threshold": CONFIDENCE_THRESHOLD,
         "classes_count": len(model_classes),
         "classes": model_classes
@@ -249,7 +249,7 @@ def predict():
         if not load_yolo_model():
             return jsonify({
                 "success": False,
-                "error": "Trained YOLO model (best.pt) is not loaded or missing on server."
+                "error": "Trained YOLO model (best.onnx) is not loaded or missing on server."
             }), 503
 
     image_bytes = None
@@ -298,16 +298,10 @@ def predict():
             conf=CONFIDENCE_THRESHOLD,
             imgsz=320,
             device="cpu",
-            half=False,
             max_det=50,
             verbose=False
-            )
+        )
         inference_time_ms = round((time.time() - start_time) * 1000.0, 1)
-        return jsonify({
-        "success": True,
-        "message": "YOLO inference completed",
-        "inference_time_ms": inference_time_ms
-        })
     except Exception as e:
         logger.exception("YOLO inference failed: %s", e)
         return jsonify({
