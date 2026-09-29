@@ -294,10 +294,14 @@ def predict():
     try:
         start_time = time.time()
         results = yolo_model.predict(
-            bgr_image,
-            conf=CONFIDENCE_THRESHOLD,
-            verbose=False
-        )
+    source=bgr_image,
+    conf=CONFIDENCE_THRESHOLD,
+    imgsz=320,
+    device="cpu",
+    half=False,
+    max_det=50,
+    verbose=False
+)
         inference_time_ms = round((time.time() - start_time) * 1000.0, 1)
     except Exception as e:
         logger.exception("YOLO inference failed: %s", e)
