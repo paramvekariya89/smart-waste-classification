@@ -280,14 +280,31 @@ def predict():
         return jsonify({"success": False, "error": "No image data received in the request."}), 400
 
     # Decode image using OpenCV
+        # Decode image using OpenCV
     try:
         bgr_image = decode_image_from_bytes(image_bytes)
     except Exception as e:
-        logger.exception("Inference execution failed: %s", e)
-    return jsonify({
-        "success": False,
-        "error": "YOLO inference failed: " + str(e)
-    }), 500
+        logger.exception("Image decoding failed: %s", e)
+        return jsonify({
+            "success": False,
+            "error": "Failed to decode image: " + str(e)
+        }), 400
+
+    # Execute Ultralytics YOLOv11n inference
+    try:
+        start_time = time.time()
+        results = yolo_model.predict(
+            bgr_image,
+            conf=CONFIDENCE_THRESHOLD,
+            verbose=False
+        )
+        inference_time_ms = round((time.time() - start_time) * 1000.0, 1)
+    except Exception as e:
+        logger.exception("YOLO inference failed: %s", e)
+        return jsonify({
+            "success": False,
+            "error": "YOLO inference failed: " + str(e)
+        }), 500
 
     # Execute Ultralytics YOLOv11n inference
     try:
