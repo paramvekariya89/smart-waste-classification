@@ -286,7 +286,7 @@ def predict():
         logger.exception("Inference execution failed: %s", e)
     return jsonify({
         "success": False,
-        "error": f"YOLO inference failed: {type(e).__name__}: {str(e)}"
+        "error": "YOLO inference failed: " + str(e)
     }), 500
 
     # Execute Ultralytics YOLOv11n inference
